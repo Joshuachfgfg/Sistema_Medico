@@ -12,6 +12,7 @@ C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\m
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\dao\MedicoDAO.java
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\dao\PacienteDAO.java
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\dao\RecepcionistaDAO.java
+C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\dao\RolDAO.java
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\dao\SeguimientoTratamientoDAO.java
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\dao\TratamientoDAO.java
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\dao\UsuarioDAO.java
@@ -47,6 +48,7 @@ C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\m
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\resources\MedicoResource.java
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\resources\PacienteResource.java
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\resources\RecepcionistaResource.java
+C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\resources\RolResource.java
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\resources\SeguimientoTratamientoResource.java
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\resources\TratamientoResource.java
 C:\Users\pevadi\Desktop\Sistema_Medico\src\main\java\com\mycompany\consultorio\medico\resources\UsuarioResource.java

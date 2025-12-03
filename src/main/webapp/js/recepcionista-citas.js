@@ -271,11 +271,11 @@ async function verDetalleCita(idCita) {
 // FUNCIONES DE UTILIDAD
 // ============================================
 function showSuccess(message) {
-    alert('✅ ' + message);
+    alert('✓ ' + message);
 }
 
 function showError(message) {
-    alert('❌ ' + message);
+    alert('✗ ' + message);
 }
 
 // ============================================

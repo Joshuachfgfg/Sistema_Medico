@@ -322,12 +322,32 @@ async function editPaciente(id) {
         document.getElementById('direccion').value = paciente.direccion || '';
         document.getElementById('ciudad').value = paciente.ciudad || '';
         
+        // Ocultar campos de usuario al editar
+        document.getElementById('usuarioSectionTitle').style.display = 'none';
+        document.getElementById('usuarioFields').style.display = 'none';
+        document.getElementById('nombreUsuario').removeAttribute('required');
+        document.getElementById('contrasena').removeAttribute('required');
+        
         document.getElementById('modalTitle').textContent = 'Editar Paciente';
         openModal('pacienteModal');
     } catch (error) {
         console.error('Error cargando paciente:', error);
         showError('Error cargando datos del paciente');
     }
+}
+
+function openNewPacienteModal() {
+    document.getElementById('pacienteForm').reset();
+    document.getElementById('pacienteId').value = '';
+    
+    // Mostrar campos de usuario para nuevo paciente
+    document.getElementById('usuarioSectionTitle').style.display = 'block';
+    document.getElementById('usuarioFields').style.display = 'flex';
+    document.getElementById('nombreUsuario').setAttribute('required', 'required');
+    document.getElementById('contrasena').setAttribute('required', 'required');
+    
+    document.getElementById('modalTitle').textContent = 'Nuevo Paciente';
+    openModal('pacienteModal');
 }
 
 async function deletePaciente(id, nombre) {

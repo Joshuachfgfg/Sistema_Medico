@@ -256,6 +256,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="js/session-check.jsp.js"></script>
+    <script src="js/consultas-medico.js" defer></script>
 </head>
 <body>
 
@@ -310,10 +311,11 @@
                     <th>Paciente</th>
                     <th>Motivo</th>
                     <th>Estado</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody id="tablaCitasDia">
-                <tr><td colspan="4" class="loading">Cargando citas...</td></tr>
+            <tbody id="tbody-citas-dia">
+                <tr><td colspan="5" class="loading">Cargando citas...</td></tr>
             </tbody>
         </table>
     </section>
@@ -504,6 +506,218 @@
         loadCitasHoy();
         loadPacientes();
     </script>
+
+    <!-- MODAL DE CONSULTA MÉDICA -->
+    <div class="modal fade" id="modalConsulta" tabindex="-1" role="dialog" data-backdrop="static">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-notes-medical"></i> Consulta Médica</h5>
+                    <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Información del Paciente -->
+                    <div class="card mb-3" style="background-color: #e3f2fd;">
+                        <div class="card-body">
+                            <h6 class="card-title" style="color: #0d47a1; font-weight: bold;">
+                                <i class="fas fa-user"></i> Información del Paciente
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Nombre:</strong><br>
+                                    <span id="paciente-nombre">-</span>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>Cédula:</strong><br>
+                                    <span id="paciente-cedula">-</span>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>Edad:</strong><br>
+                                    <span id="paciente-edad">-</span>
+                                </div>
+                                <div class="col-md-5">
+                                    <strong>Alergias:</strong><br>
+                                    <span id="paciente-alergias" style="color: #d32f2f;">-</span>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-12">
+                                    <strong>Enfermedades Crónicas:</strong><br>
+                                    <span id="paciente-enfermedades">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Motivo de Consulta -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title" style="color: #004b6f; font-weight: bold;">
+                                <i class="fas fa-clipboard-list"></i> Motivo de Consulta
+                            </h6>
+                            <p id="motivo-consulta-display" style="margin-bottom: 5px;">-</p>
+                            <small><strong>Síntomas previos:</strong> <span id="sintomas-previos">-</span></small>
+                        </div>
+                    </div>
+
+                    <!-- Signos Vitales -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title" style="color: #004b6f; font-weight: bold;">
+                                <i class="fas fa-heartbeat"></i> Signos Vitales
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label>Temperatura (°C)</label>
+                                    <input type="text" class="form-control" id="temperatura" placeholder="36.5">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Presión Arterial</label>
+                                    <input type="text" class="form-control" id="presion-arterial" placeholder="120/80">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Frecuencia Cardíaca (lpm)</label>
+                                    <input type="text" class="form-control" id="frecuencia-cardiaca" placeholder="72">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Frecuencia Respiratoria (rpm)</label>
+                                    <input type="text" class="form-control" id="frecuencia-respiratoria" placeholder="16">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-4">
+                                    <label>Saturación O2 (%)</label>
+                                    <input type="text" class="form-control" id="saturacion-oxigeno" placeholder="98">
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Peso (kg)</label>
+                                    <input type="text" class="form-control" id="peso" placeholder="70">
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Altura (cm)</label>
+                                    <input type="text" class="form-control" id="altura" placeholder="170">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Evaluación Médica -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title" style="color: #004b6f; font-weight: bold;">
+                                <i class="fas fa-stethoscope"></i> Evaluación Médica
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-12 mb-2">
+                                    <label>Síntomas Actuales</label>
+                                    <textarea class="form-control" id="sintomas-actuales" rows="2" 
+                                        placeholder="Describa los síntomas que presenta el paciente"></textarea>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <label>Examen Físico</label>
+                                    <textarea class="form-control" id="examen-fisico" rows="3" 
+                                        placeholder="Resultados del examen físico"></textarea>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <label><strong>Diagnóstico *</strong></label>
+                                    <textarea class="form-control" id="diagnostico" rows="2" 
+                                        placeholder="Diagnóstico médico (obligatorio)" required></textarea>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <label>Observaciones</label>
+                                    <textarea class="form-control" id="observaciones-consulta" rows="2" 
+                                        placeholder="Observaciones adicionales"></textarea>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <label>Recomendaciones</label>
+                                    <textarea class="form-control" id="recomendaciones" rows="2" 
+                                        placeholder="Recomendaciones para el paciente"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Próxima Cita (opcional)</label>
+                                    <input type="date" class="form-control" id="proxima-cita">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Historial de Consultas Previas -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title" style="color: #004b6f; font-weight: bold;">
+                                <i class="fas fa-history"></i> Consultas Previas (Últimas 5)
+                            </h6>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Diagnóstico</th>
+                                            <th>Observaciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-historial-consultas">
+                                        <tr><td colspan="3" style="text-align:center;">Cargando...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="guardarConsulta()">
+                        <i class="fas fa-save"></i> Guardar Consulta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .badge-estado {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .badge-pendiente {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .badge-confirmada {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .badge-atendida {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .badge-cancelada {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.85em;
+        }
+        .modal-xl {
+            max-width: 1200px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .card-title {
+            margin-bottom: 10px;
+            border-bottom: 2px solid #004b6f;
+            padding-bottom: 5px;
+        }
+    </style>
 
 </body>
 </html>

@@ -391,45 +391,7 @@
             }
         }
         
-        async function loadCitasHoy() {
-            try {
-                const response = await fetch(`${API_URL}/citas`, {credentials: 'include'});
-                const citas = await response.json();
-                
-                const hoy = new Date().toISOString().split('T')[0];
-                // Filtrar solo citas con pacientes y médicos activos
-                const citasHoy = citas.filter(c => 
-                    c.fechaCita && c.fechaCita.startsWith(hoy) &&
-                    c.paciente && c.paciente.activo === true &&
-                    c.medico && c.medico.activo === true
-                );
-                
-                const tbody = document.getElementById('tablaCitasDia');
-                tbody.innerHTML = '';
-                
-                if (citasHoy.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#607d8b;">No hay citas programadas para hoy</td></tr>';
-                    return;
-                }
-                
-                citasHoy.forEach(cita => {
-                    const tr = document.createElement('tr');
-                    const pacienteNombre = cita.paciente ? `${cita.paciente.nombres} ${cita.paciente.apellidos}` : 'N/A';
-                    const estado = cita.estadoCita ? cita.estadoCita.nombreEstado : 'Pendiente';
-                    
-                    tr.innerHTML = `
-                        <td>${cita.horaCita || 'N/A'}</td>
-                        <td>${pacienteNombre}</td>
-                        <td>${cita.motivoConsulta || 'Sin motivo especificado'}</td>
-                        <td><span class="tag tag-${estado.toLowerCase()}">${estado}</span></td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (error) {
-                console.error('Error cargando citas:', error);
-                document.getElementById('tablaCitasDia').innerHTML = '<tr><td colspan="4" style="color:red;">Error al cargar citas</td></tr>';
-            }
-        }
+        // loadCitasHoy ahora está en consultas-medico.js
         
         async function loadPacientes() {
             try {
@@ -500,10 +462,9 @@
             }
         }
         
-        // Inicializar
+        // Inicializar (solo las funciones que no están en consultas-medico.js)
         updateUserInfo();
         loadStats();
-        loadCitasHoy();
         loadPacientes();
     </script>
 

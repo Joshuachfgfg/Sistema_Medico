@@ -68,14 +68,20 @@ async function abrirConsulta(idCita) {
         
         currentPaciente = currentCita.paciente;
         
-        // Verificar si ya existe una consulta para esta cita
-        const consultaExistente = await fetch(`${API_URL}/consultas/cita/${idCita}`, {credentials: 'include'});
+        // Verificar si ya existe una consulta para esta cita (404 es normal si no existe)
+        limpiarFormularioConsulta(); // Iniciar con formulario limpio
         
-        if (consultaExistente.ok) {
-            const consulta = await consultaExistente.json();
-            cargarConsultaExistente(consulta);
-        } else {
-            limpiarFormularioConsulta();
+        try {
+            const consultaExistente = await fetch(`${API_URL}/consultas/cita/${idCita}`, {credentials: 'include'});
+            
+            if (consultaExistente.ok) {
+                const consulta = await consultaExistente.json();
+                cargarConsultaExistente(consulta);
+            }
+            // Si es 404, simplemente continuar con formulario limpio (sin mostrar error)
+        } catch (error) {
+            // Silenciar errores de red, continuar con formulario limpio
+            // console.log ya no es necesario
         }
         
         // Llenar datos del paciente
@@ -210,18 +216,28 @@ async function guardarConsulta() {
             altura: document.getElementById('altura').value
         };
         
+        // Formatear fecha para Java LocalDateTime (sin milisegundos ni zona horaria)
+        const ahora = new Date();
+        const year = ahora.getFullYear();
+        const month = String(ahora.getMonth() + 1).padStart(2, '0');
+        const day = String(ahora.getDate()).padStart(2, '0');
+        const hours = String(ahora.getHours()).padStart(2, '0');
+        const minutes = String(ahora.getMinutes()).padStart(2, '0');
+        const seconds = String(ahora.getSeconds()).padStart(2, '0');
+        const fechaConsulta = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        
         const consulta = {
             cita: { idCita: currentCita.idCita },
             paciente: { idPaciente: currentPaciente.idPaciente },
             medico: { idMedico: currentCita.medico.idMedico },
-            fechaConsulta: new Date().toISOString(),
-            motivoConsulta: currentCita.motivoConsulta,
-            sintomasPresentados: document.getElementById('sintomas-actuales').value.trim(),
-            signosVitales: JSON.stringify(signosVitales),
-            examenFisico: document.getElementById('examen-fisico').value.trim(),
+            fechaConsulta: fechaConsulta,
+            motivoConsulta: currentCita.motivoConsulta || 'Consulta general',
+            sintomasPresentados: document.getElementById('sintomas-actuales').value.trim() || null,
+            signosVitales: JSON.stringify(signosVitales), // Convertir a String JSON
+            examenFisico: document.getElementById('examen-fisico').value.trim() || null,
             diagnostico: diagnostico,
-            observaciones: document.getElementById('observaciones-consulta').value.trim(),
-            recomendaciones: document.getElementById('recomendaciones').value.trim(),
+            observaciones: document.getElementById('observaciones-consulta').value.trim() || null,
+            recomendaciones: document.getElementById('recomendaciones').value.trim() || null,
             proximaCita: document.getElementById('proxima-cita').value || null
         };
         
@@ -240,8 +256,14 @@ async function guardarConsulta() {
             $('#modalConsulta').modal('hide');
             loadCitasDelDia();
         } else {
-            const error = await response.text();
-            showError('Error al guardar consulta: ' + error);
+            const errorText = await response.text();
+            console.error('Error del servidor:', errorText);
+            try {
+                const errorJson = JSON.parse(errorText);
+                showError('Error: ' + (errorJson.error || errorText));
+            } catch (e) {
+                showError('Error al guardar consulta: ' + errorText);
+            }
         }
         
     } catch (error) {

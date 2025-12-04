@@ -79,10 +79,14 @@ function formatDateTime(dateTimeString) {
     return date.toLocaleString('es-ES');
 }
 
-// Cerrar modal al hacer clic fuera de él
+// Cerrar modal al hacer clic fuera de él (SOLO si NO está en panel admin)
 window.onclick = function(event) {
     if (event.target.classList.contains('modal')) {
-        event.target.style.display = 'none';
+        // No cerrar modals en el panel de administrador
+        const isAdminPanel = window.location.pathname.includes('/admin/');
+        if (!isAdminPanel) {
+            event.target.style.display = 'none';
+        }
     }
 }
 

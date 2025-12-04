@@ -450,13 +450,15 @@
                         <div class="col-md-12 mb-3">
                             <label><strong>Motivo de Consulta *</strong></label>
                             <textarea class="form-control" id="motivo-cita" rows="2" 
-                                      placeholder="Describa el motivo de la consulta" required></textarea>
+                                      placeholder="Describa el motivo de la consulta" required 
+                                      oninput="this.value = this.value.toUpperCase()"></textarea>
                         </div>
                         
                         <div class="col-md-12 mb-3">
                             <label>Síntomas (opcional)</label>
                             <textarea class="form-control" id="sintomas-cita" rows="2" 
-                                      placeholder="Síntomas que presenta el paciente"></textarea>
+                                      placeholder="Síntomas que presenta el paciente"
+                                      oninput="this.value = this.value.toUpperCase()"></textarea>
                         </div>
                     </div>
                 </div>
@@ -491,15 +493,15 @@
                     <div class="row">
                         <div class="col-md-6 mb-2">
                             <label><strong>Nombres *</strong></label>
-                            <input type="text" class="form-control" id="pac-nombres" required>
+                            <input type="text" class="form-control" id="pac-nombres" required oninput="this.value = this.value.toUpperCase()">
                         </div>
                         <div class="col-md-6 mb-2">
                             <label><strong>Apellidos *</strong></label>
-                            <input type="text" class="form-control" id="pac-apellidos" required>
+                            <input type="text" class="form-control" id="pac-apellidos" required oninput="this.value = this.value.toUpperCase()">
                         </div>
                         <div class="col-md-4 mb-2">
                             <label><strong>Cédula *</strong></label>
-                            <input type="text" class="form-control" id="pac-cedula" required>
+                            <input type="text" class="form-control" id="pac-cedula" required maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                         </div>
                         <div class="col-md-4 mb-2">
                             <label><strong>Fecha de Nacimiento *</strong></label>
@@ -522,7 +524,7 @@
                     <div class="row">
                         <div class="col-md-4 mb-2">
                             <label><strong>Teléfono *</strong></label>
-                            <input type="tel" class="form-control" id="pac-telefono" required>
+                            <input type="tel" class="form-control" id="pac-telefono" required maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Email</label>
@@ -530,11 +532,11 @@
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Ciudad</label>
-                            <input type="text" class="form-control" id="pac-ciudad">
+                            <input type="text" class="form-control" id="pac-ciudad" oninput="this.value = this.value.toUpperCase()">
                         </div>
                         <div class="col-md-12 mb-2">
                             <label>Dirección</label>
-                            <input type="text" class="form-control" id="pac-direccion">
+                            <input type="text" class="form-control" id="pac-direccion" oninput="this.value = this.value.toUpperCase()">
                         </div>
                     </div>
                     
@@ -558,7 +560,7 @@
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Seguro Médico</label>
-                            <input type="text" class="form-control" id="pac-seguro">
+                            <input type="text" class="form-control" id="pac-seguro" oninput="this.value = this.value.toUpperCase()">
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Número de Seguro</label>
@@ -567,12 +569,14 @@
                         <div class="col-md-6 mb-2">
                             <label>Alergias</label>
                             <textarea class="form-control" id="pac-alergias" rows="2" 
-                                      placeholder="Alergias conocidas"></textarea>
+                                      placeholder="Alergias conocidas"
+                                      oninput="this.value = this.value.toUpperCase()"></textarea>
                         </div>
                         <div class="col-md-6 mb-2">
                             <label>Enfermedades Crónicas</label>
                             <textarea class="form-control" id="pac-enfermedades" rows="2" 
-                                      placeholder="Diabetes, hipertensión, etc."></textarea>
+                                      placeholder="Diabetes, hipertensión, etc."
+                                      oninput="this.value = this.value.toUpperCase()"></textarea>
                         </div>
                     </div>
                     
@@ -582,16 +586,17 @@
                     <div class="row">
                         <div class="col-md-4 mb-2">
                             <label>Nombre Completo</label>
-                            <input type="text" class="form-control" id="pac-contacto-nombre">
+                            <input type="text" class="form-control" id="pac-contacto-nombre" oninput="this.value = this.value.toUpperCase()">
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Teléfono</label>
-                            <input type="tel" class="form-control" id="pac-contacto-telefono">
+                            <input type="tel" class="form-control" id="pac-contacto-telefono" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Relación</label>
                             <input type="text" class="form-control" id="pac-contacto-relacion" 
-                                   placeholder="Ej: Madre, Esposo, Hermano">
+                                   placeholder="Ej: Madre, Esposo, Hermano"
+                                   oninput="this.value = this.value.toUpperCase()">
                         </div>
                     </div>
                     

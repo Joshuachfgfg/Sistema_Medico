@@ -556,34 +556,34 @@
                             </h6>
                             <div class="row">
                                 <div class="col-md-3">
-                                    <label>Temperatura (°C)</label>
-                                    <input type="text" class="form-control" id="temperatura" placeholder="36.5">
+                                    <label>Temperatura (°C) *</label>
+                                    <input type="text" class="form-control" id="temperatura" placeholder="36.5" required>
                                 </div>
                                 <div class="col-md-3">
-                                    <label>Presión Arterial</label>
-                                    <input type="text" class="form-control" id="presion-arterial" placeholder="120/80">
+                                    <label>Presión Arterial *</label>
+                                    <input type="text" class="form-control" id="presion-arterial" placeholder="120/80" required>
                                 </div>
                                 <div class="col-md-3">
-                                    <label>Frecuencia Cardíaca (lpm)</label>
-                                    <input type="text" class="form-control" id="frecuencia-cardiaca" placeholder="72">
+                                    <label>Frecuencia Cardíaca (lpm) *</label>
+                                    <input type="text" class="form-control" id="frecuencia-cardiaca" placeholder="72" required>
                                 </div>
                                 <div class="col-md-3">
-                                    <label>Frecuencia Respiratoria (rpm)</label>
-                                    <input type="text" class="form-control" id="frecuencia-respiratoria" placeholder="16">
+                                    <label>Frecuencia Respiratoria (rpm) *</label>
+                                    <input type="text" class="form-control" id="frecuencia-respiratoria" placeholder="16" required>
                                 </div>
                             </div>
                             <div class="row mt-2">
                                 <div class="col-md-4">
-                                    <label>Saturación O2 (%)</label>
-                                    <input type="text" class="form-control" id="saturacion-oxigeno" placeholder="98">
+                                    <label>Saturación O2 (%) *</label>
+                                    <input type="text" class="form-control" id="saturacion-oxigeno" placeholder="98" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label>Peso (kg)</label>
-                                    <input type="text" class="form-control" id="peso" placeholder="70">
+                                    <label>Peso (kg) *</label>
+                                    <input type="text" class="form-control" id="peso" placeholder="70" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label>Altura (cm)</label>
-                                    <input type="text" class="form-control" id="altura" placeholder="170">
+                                    <label>Altura (cm) *</label>
+                                    <input type="text" class="form-control" id="altura" placeholder="170" required>
                                 </div>
                             </div>
                         </div>
@@ -597,29 +597,34 @@
                             </h6>
                             <div class="row">
                                 <div class="col-md-12 mb-2">
-                                    <label>Síntomas Actuales</label>
+                                    <label>Síntomas Actuales *</label>
                                     <textarea class="form-control" id="sintomas-actuales" rows="2" 
-                                        placeholder="Describa los síntomas que presenta el paciente"></textarea>
+                                        placeholder="Describa los síntomas que presenta el paciente" required
+                                        oninput="this.value = this.value.toUpperCase()"></textarea>
                                 </div>
                                 <div class="col-md-12 mb-2">
-                                    <label>Examen Físico</label>
+                                    <label>Examen Físico *</label>
                                     <textarea class="form-control" id="examen-fisico" rows="3" 
-                                        placeholder="Resultados del examen físico"></textarea>
+                                        placeholder="Resultados del examen físico" required
+                                        oninput="this.value = this.value.toUpperCase()"></textarea>
                                 </div>
                                 <div class="col-md-12 mb-2">
                                     <label><strong>Diagnóstico *</strong></label>
                                     <textarea class="form-control" id="diagnostico" rows="2" 
-                                        placeholder="Diagnóstico médico (obligatorio)" required></textarea>
+                                        placeholder="Diagnóstico médico (obligatorio)" required
+                                        oninput="this.value = this.value.toUpperCase()"></textarea>
                                 </div>
                                 <div class="col-md-12 mb-2">
-                                    <label>Observaciones</label>
+                                    <label>Observaciones *</label>
                                     <textarea class="form-control" id="observaciones-consulta" rows="2" 
-                                        placeholder="Observaciones adicionales"></textarea>
+                                        placeholder="Observaciones adicionales" required
+                                        oninput="this.value = this.value.toUpperCase()"></textarea>
                                 </div>
                                 <div class="col-md-12 mb-2">
-                                    <label>Recomendaciones</label>
+                                    <label>Recomendaciones *</label>
                                     <textarea class="form-control" id="recomendaciones" rows="2" 
-                                        placeholder="Recomendaciones para el paciente"></textarea>
+                                        placeholder="Recomendaciones para el paciente" required
+                                        oninput="this.value = this.value.toUpperCase()"></textarea>
                                 </div>
                                 <div class="col-md-6">
                                     <label>Próxima Cita (opcional)</label>

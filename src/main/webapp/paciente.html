@@ -174,10 +174,11 @@
                     <th>Médico</th>
                     <th>Especialidad</th>
                     <th>Estado</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="tbody-citas">
-                <tr><td colspan="5" class="loading">Cargando citas...</td></tr>
+                <tr><td colspan="6" class="loading">Cargando citas...</td></tr>
             </tbody>
         </table>
         <p id="mensaje-sin-citas" style="font-size: 0.9em; color: #607d8b; margin-top: 10px; display: none;">
@@ -186,18 +187,24 @@
     </section>
 
     <section>
-        <h2>Mis consultas anteriores</h2>
+        <h2>Historial de Citas</h2>
+        <p style="font-size: 0.9em; color: #607d8b; margin-bottom: 15px;">
+            Citas completadas y canceladas
+        </p>
         <table class="data-table">
             <thead>
                 <tr>
                     <th>Fecha</th>
+                    <th>Hora</th>
                     <th>Médico</th>
-                    <th>Diagnóstico</th>
-                    <th>Observaciones</th>
+                    <th>Especialidad</th>
+                    <th>Estado</th>
+                    <th>Motivo</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody id="tbody-consultas">
-                <tr><td colspan="4" class="loading">Cargando consultas...</td></tr>
+            <tbody id="tbody-historial">
+                <tr><td colspan="7" class="loading">Cargando historial...</td></tr>
             </tbody>
         </table>
     </section>
@@ -224,16 +231,16 @@
                     const paciente = await response.json();
                     currentPacienteId = paciente.idPaciente;
                     loadCitas();
-                    loadConsultas();
+                    loadHistorial();
                 } else {
                     // Si no encuentra el paciente, intentar buscar en todos los pacientes
                     const allPacientes = await fetch(`${API_URL}/pacientes`, {credentials: 'include'}).then(r => r.json());
                     
                     // Por ahora, si no hay paciente asociado, mostrar mensaje
                     document.getElementById('tbody-citas').innerHTML = 
-                        '<tr><td colspan="5" style="text-align:center;color:#607d8b;">No se encontró información de paciente para este usuario</td></tr>';
-                    document.getElementById('tbody-consultas').innerHTML = 
-                        '<tr><td colspan="4" style="text-align:center;color:#607d8b;">No se encontró información de paciente para este usuario</td></tr>';
+                        '<tr><td colspan="6" style="text-align:center;color:#607d8b;">No se encontró información de paciente para este usuario</td></tr>';
+                    document.getElementById('tbody-historial').innerHTML = 
+                        '<tr><td colspan="6" style="text-align:center;color:#607d8b;">No se encontró información de paciente para este usuario</td></tr>';
                 }
             } catch (error) {
                 console.error('Error buscando paciente:', error);
@@ -251,23 +258,37 @@
                 tbody.innerHTML = '';
                 
                 if (citas.length === 0) {
-                    document.getElementById('mensaje-sin-citas').style.display = 'block';
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#607d8b;">No tienes citas programadas</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#607d8b;">No tienes citas programadas</td></tr>';
                     return;
                 }
                 
-                // Filtrar citas futuras o de hoy
-                const hoy = new Date();
-                hoy.setHours(0, 0, 0, 0);
+                // Filtrar citas futuras o de hoy (usando comparación de strings para evitar problemas de timezone)
+                const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
                 
-                // Filtrar solo citas con médicos activos
+                // Filtrar citas pendientes y futuras/de hoy con médicos activos
                 const citasFuturas = citas.filter(c => {
-                    const fechaCita = new Date(c.fechaCita);
-                    return fechaCita >= hoy && c.medico && c.medico.activo === true;
-                }).sort((a, b) => new Date(a.fechaCita) - new Date(b.fechaCita));
+                    // Verificar que tenga fecha y médico activo
+                    if (!c.fechaCita || !c.medico || c.medico.activo !== true) return false;
+                    
+                    // Verificar que sea hoy o en el futuro
+                    if (c.fechaCita < hoy) return false;
+                    
+                    // Mostrar solo citas pendientes (estado ID 7 o nombre "Pendiente")
+                    if (c.estadoCita && (c.estadoCita.idEstadoCita === 7 || c.estadoCita.nombreEstado === 'Pendiente')) {
+                        return true;
+                    }
+                    
+                    return false;
+                }).sort((a, b) => {
+                    // Ordenar por fecha y hora
+                    if (a.fechaCita !== b.fechaCita) {
+                        return a.fechaCita.localeCompare(b.fechaCita);
+                    }
+                    return (a.horaCita || '').localeCompare(b.horaCita || '');
+                });
                 
                 if (citasFuturas.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#607d8b;">No tienes citas futuras programadas</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#607d8b;">No tienes citas pendientes</td></tr>';
                     return;
                 }
                 
@@ -283,61 +304,523 @@
                         <td>${medicoNombre}</td>
                         <td>${especialidad}</td>
                         <td>${estado}</td>
+                        <td>
+                            <button 
+                                class="btn-cancelar-cita" 
+                                onclick="abrirModalCancelar(${cita.idCita}, '${cita.fechaCita}', '${cita.horaCita}')"
+                                title="Cancelar cita">
+                                <i class="fas fa-times-circle"></i> Cancelar
+                            </button>
+                        </td>
                     `;
                     tbody.appendChild(tr);
                 });
             } catch (error) {
                 console.error('Error cargando citas:', error);
                 document.getElementById('tbody-citas').innerHTML = 
-                    '<tr><td colspan="5" style="color:red;">Error al cargar citas</td></tr>';
+                    '<tr><td colspan="6" style="color:red;">Error al cargar citas</td></tr>';
             }
         }
         
-        async function loadConsultas() {
+        async function loadHistorial() {
             if (!currentPacienteId) return;
             
             try {
-                const response = await fetch(`${API_URL}/consultas/paciente/${currentPacienteId}`, {credentials: 'include'});
-                const consultas = await response.json();
+                const response = await fetch(`${API_URL}/citas/paciente/${currentPacienteId}`, {credentials: 'include'});
+                const citas = await response.json();
                 
-                const tbody = document.getElementById('tbody-consultas');
+                const tbody = document.getElementById('tbody-historial');
                 tbody.innerHTML = '';
                 
-                if (consultas.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#607d8b;">No tienes consultas registradas</td></tr>';
+                if (citas.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#607d8b;">No tienes historial de citas</td></tr>';
                     return;
                 }
                 
-                // Ordenar por fecha descendente (más recientes primero)
-                consultas.sort((a, b) => new Date(b.fechaConsulta) - new Date(a.fechaConsulta));
+                // Filtrar solo citas completadas (ID 9) o canceladas (ID 10) con médicos activos
+                const citasHistorial = citas.filter(c => {
+                    if (!c.estadoCita || !c.medico || c.medico.activo !== true) return false;
+                    
+                    // Estados: 9 = Completada, 10 = Cancelada
+                    const idEstado = c.estadoCita.idEstadoCita;
+                    return idEstado === 9 || idEstado === 10;
+                }).sort((a, b) => {
+                    // Ordenar por fecha descendente (más reciente primero)
+                    if (a.fechaCita !== b.fechaCita) {
+                        return b.fechaCita.localeCompare(a.fechaCita);
+                    }
+                    return (b.horaCita || '').localeCompare(a.horaCita || '');
+                });
                 
-                // Filtrar solo consultas con médicos activos
-                const consultasActivas = consultas.filter(c => 
-                    !c.cita || !c.cita.medico || c.cita.medico.activo === true
-                );
+                if (citasHistorial.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#607d8b;">No tienes citas completadas o canceladas</td></tr>';
+                    return;
+                }
                 
-                consultasActivas.forEach(c => {
-                    const medicoNombre = c.cita && c.cita.medico ? 
-                        `Dr. ${c.cita.medico.nombres} ${c.cita.medico.apellidos}` : 'N/A';
+                citasHistorial.forEach(cita => {
+                    const medicoNombre = cita.medico ? `Dr. ${cita.medico.nombres} ${cita.medico.apellidos}` : 'N/A';
+                    const especialidad = cita.medico && cita.medico.especialidad ? cita.medico.especialidad.nombreEspecialidad : 'N/A';
+                    const estado = cita.estadoCita ? cita.estadoCita.nombreEstado : 'N/A';
+                    
+                    // Extraer razón de cancelación del motivo si existe
+                    let motivoMostrar = cita.motivoConsulta || 'Sin motivo';
+                    let razonCancelacion = '';
+                    
+                    if (cita.estadoCita.idEstadoCita === 10 && cita.motivoConsulta) {
+                        const match = cita.motivoConsulta.match(/\[CANCELADA - Razón: (.+?)\]/);
+                        if (match) {
+                            razonCancelacion = match[1];
+                            motivoMostrar = cita.motivoConsulta.replace(/\[CANCELADA - Razón: .+?\]/, '').trim();
+                            motivoMostrar = `${motivoMostrar}<br><small style="color:#d32f2f;"></small>`;
+                        }
+                    }
+                    
+                    // Estilo según estado
+                    const estadoClass = cita.estadoCita.idEstadoCita === 9 ? 'color:#2e7d32;font-weight:bold;' : 'color:#d32f2f;font-weight:bold;';
+                    
+                    // Botones según el estado de la cita
+                    let accionesHTML = '';
+                    if (cita.estadoCita.idEstadoCita === 9) {
+                        // Botón "Ver Consulta" para citas completadas
+                        accionesHTML = `<button class="btn-ver-consulta" onclick="verDetalleConsulta(${cita.idCita})">
+                            <i class="fas fa-eye"></i> Ver
+                        </button>`;
+                    } else if (cita.estadoCita.idEstadoCita === 10) {
+                        // Botón "Ver Cancelación" para citas canceladas
+                        const motivoEscapado = (cita.motivoConsulta || '').replace(/'/g, "\\'");
+                        accionesHTML = `<button class="btn-ver-cancelacion" onclick="verRazonCancelacion('${motivoEscapado}')">
+                            <i class="fas fa-info-circle"></i> Ver
+                        </button>`;
+                    }
                     
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${c.fechaConsulta || 'N/A'}</td>
+                        <td>${cita.fechaCita || 'N/A'}</td>
+                        <td>${cita.horaCita || 'N/A'}</td>
                         <td>${medicoNombre}</td>
-                        <td>${c.diagnostico || 'Sin diagnóstico'}</td>
-                        <td>${c.observaciones || 'Sin observaciones'}</td>
+                        <td>${especialidad}</td>
+                        <td style="${estadoClass}">${estado}</td>
+                        <td>${motivoMostrar}</td>
+                        <td>${accionesHTML}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             } catch (error) {
-                console.error('Error cargando consultas:', error);
-                document.getElementById('tbody-consultas').innerHTML = 
-                    '<tr><td colspan="4" style="color:red;">Error al cargar consultas</td></tr>';
+                console.error('Error cargando historial:', error);
+                document.getElementById('tbody-historial').innerHTML = 
+                    '<tr><td colspan="7" style="color:red;">Error al cargar historial</td></tr>';
             }
         }
         
         // Inicializar
         updateUserInfo();
+        
+        // ============================================
+        // CANCELAR CITA
+        // ============================================
+        let citaACancelar = null;
+        
+        function abrirModalCancelar(idCita, fechaCita, horaCita) {
+            citaACancelar = idCita;
+            document.getElementById('cita-info-cancelar').textContent = `Cita del ${fechaCita} a las ${horaCita}`;
+            document.getElementById('razon-cancelacion').value = '';
+            document.getElementById('modalCancelarCita').style.display = 'block';
+        }
+        
+        function cerrarModalCancelar() {
+            document.getElementById('modalCancelarCita').style.display = 'none';
+            citaACancelar = null;
+        }
+        
+        async function confirmarCancelacion() {
+            const razon = document.getElementById('razon-cancelacion').value.trim();
+            
+            if (!razon) {
+                alert('Por favor ingrese una razón para cancelar la cita');
+                return;
+            }
+            
+            if (!citaACancelar) {
+                alert('Error: No se identificó la cita a cancelar');
+                return;
+            }
+            
+            try {
+                // Obtener la cita actual
+                const citaResponse = await fetch(`${API_URL}/citas/${citaACancelar}`, {credentials: 'include'});
+                const cita = await citaResponse.json();
+                
+                // Actualizar el estado a Cancelada (ID 10) y agregar la razón
+                cita.estadoCita = { idEstadoCita: 10 };
+                cita.motivoConsulta = cita.motivoConsulta + ' [CANCELADA - Razón: ' + razon + ']';
+                
+                const response = await fetch(`${API_URL}/citas/${citaACancelar}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(cita)
+                });
+                
+                if (response.ok) {
+                    alert('✓ Cita cancelada exitosamente');
+                    cerrarModalCancelar();
+                    loadCitas(); // Recargar la tabla de citas pendientes
+                    loadHistorial(); // Recargar el historial
+                } else {
+                    const error = await response.text();
+                    alert('Error al cancelar la cita: ' + error);
+                }
+            } catch (error) {
+                console.error('Error cancelando cita:', error);
+                alert('Error al cancelar la cita. Por favor intente nuevamente.');
+            }
+        }
+    </script>
+    
+    <!-- MODAL CANCELAR CITA -->
+    <div id="modalCancelarCita" class="modal-cancelar-cita">
+        <div class="modal-content" style="max-width: 500px;">
+            <span style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;" onclick="cerrarModalCancelar()">&times;</span>
+            <h3 style="color: #d32f2f; margin-bottom: 15px;">
+                <i class="fas fa-times-circle"></i> Cancelar Cita
+            </h3>
+            
+            <div style="background-color: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                <strong>⚠️ Atención:</strong> Está por cancelar la siguiente cita:
+                <div style="margin-top: 8px; font-weight: bold; color: #004b6f;" id="cita-info-cancelar"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="razon-cancelacion"><strong>Razón de cancelación *</strong></label>
+                <textarea 
+                    id="razon-cancelacion" 
+                    class="form-control" 
+                    rows="4" 
+                    placeholder="Por favor indique el motivo de la cancelación..."
+                    required
+                    maxlength="500"></textarea>
+                <small style="color: #666;">Máximo 500 caracteres</small>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" onclick="cerrarModalCancelar()" class="btn-main" style="background-color: #757575; flex: 1;">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+                <button type="button" onclick="confirmarCancelacion()" class="btn-main" style="background-color: #d32f2f; flex: 1;">
+                    <i class="fas fa-times-circle"></i> Confirmar Cancelación
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Ver Razón de Cancelación (Bootstrap) -->
+    <div class="modal fade" id="modalVerCancelacion" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #e65100 0%, #bf360c 100%); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-ban"></i> Información de Cancelación</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label style="font-weight: bold; color: #004b6f;">Motivo Original de la Cita:</label>
+                        <p id="cancelacion-motivo-original" style="background-color: #f5f5f5; padding: 12px; border-radius: 5px; margin-top: 8px;">-</p>
+                    </div>
+                    <div>
+                        <label style="font-weight: bold; color: #d32f2f;">Razón de Cancelación:</label>
+                        <p id="cancelacion-razon" style="background-color: #ffebee; padding: 12px; border-radius: 5px; margin-top: 8px; color: #c62828;">-</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Detalle de Consulta -->
+    <div class="modal fade" id="modalDetalleConsulta" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #00897b 0%, #00695c 100%); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-file-medical-alt"></i> Detalle de Consulta Médica</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Información del Paciente -->
+                    <div class="card mb-3" style="background-color: #e0f2f1;">
+                        <div class="card-body">
+                            <h6 class="card-title" style="color: #00695c; font-weight: bold;">
+                                <i class="fas fa-user"></i> Información del Paciente
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Nombre:</strong><br>
+                                    <span id="detalle-paciente-nombre">-</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Cédula:</strong><br>
+                                    <span id="detalle-paciente-cedula">-</span>
+                                </div>
+                                <div class="col-md-5">
+                                    <strong>Fecha de Consulta:</strong><br>
+                                    <span id="detalle-fecha-consulta">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Motivo y Síntomas -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title" style="color: #004b6f; font-weight: bold;">
+                                <i class="fas fa-clipboard-list"></i> Motivo de Consulta
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-12 mb-2">
+                                    <label><strong>Motivo:</strong></label>
+                                    <textarea class="form-control" id="detalle-motivo" rows="2" readonly style="background-color: #f5f5f5;"></textarea>
+                                </div>
+                                <div class="col-md-12">
+                                    <label><strong>Síntomas Presentados:</strong></label>
+                                    <textarea class="form-control" id="detalle-sintomas" rows="2" readonly style="background-color: #f5f5f5;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signos Vitales -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title" style="color: #004b6f; font-weight: bold;">
+                                <i class="fas fa-heartbeat"></i> Signos Vitales
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label>Temperatura (°C)</label>
+                                    <input type="text" class="form-control" id="detalle-temperatura" readonly style="background-color: #f5f5f5;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Presión Arterial</label>
+                                    <input type="text" class="form-control" id="detalle-presion" readonly style="background-color: #f5f5f5;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Frecuencia Cardíaca (lpm)</label>
+                                    <input type="text" class="form-control" id="detalle-fc" readonly style="background-color: #f5f5f5;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Frecuencia Respiratoria (rpm)</label>
+                                    <input type="text" class="form-control" id="detalle-fr" readonly style="background-color: #f5f5f5;">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-4">
+                                    <label>Saturación O₂ (%)</label>
+                                    <input type="text" class="form-control" id="detalle-sat" readonly style="background-color: #f5f5f5;">
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Peso (kg)</label>
+                                    <input type="text" class="form-control" id="detalle-peso" readonly style="background-color: #f5f5f5;">
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Altura (m)</label>
+                                    <input type="text" class="form-control" id="detalle-altura" readonly style="background-color: #f5f5f5;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Evaluación Médica -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title" style="color: #004b6f; font-weight: bold;">
+                                <i class="fas fa-stethoscope"></i> Evaluación Médica
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-12 mb-2">
+                                    <label><strong>Examen Físico:</strong></label>
+                                    <textarea class="form-control" id="detalle-examen-fisico" rows="3" readonly style="background-color: #f5f5f5;"></textarea>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <label><strong>Diagnóstico:</strong></label>
+                                    <textarea class="form-control" id="detalle-diagnostico" rows="3" readonly style="background-color: #f5f5f5;"></textarea>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <label><strong>Observaciones:</strong></label>
+                                    <textarea class="form-control" id="detalle-observaciones" rows="2" readonly style="background-color: #f5f5f5;"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label><strong>Recomendaciones:</strong></label>
+                                    <textarea class="form-control" id="detalle-recomendaciones" rows="2" readonly style="background-color: #f5f5f5;"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label><strong>Próxima Cita:</strong></label>
+                                    <input type="text" class="form-control" id="detalle-proxima-cita" readonly style="background-color: #f5f5f5;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .modal-cancelar-cita {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-cancelar-cita .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .btn-cancelar-cita {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        
+        .btn-cancelar-cita:hover {
+            background-color: #b71c1c;
+        }
+        
+        .btn-ver-consulta {
+            background-color: #00897b;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        
+        .btn-ver-consulta:hover {
+            background-color: #00695c;
+        }
+        
+        .btn-ver-cancelacion {
+            background-color: #e65100;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        
+        .btn-ver-cancelacion:hover {
+            background-color: #bf360c;
+        }
+        
+        .modal-xl {
+            max-width: 1200px;
+        }
+        
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .card-title {
+            margin-bottom: 10px;
+            border-bottom: 2px solid #004b6f;
+            padding-bottom: 5px;
+        }
+    </style>
+    
+    <script>
+        // Función para ver el detalle de una consulta completada (IDÉNTICA a la del médico)
+        async function verDetalleConsulta(idCita) {
+            try {
+                // Obtener la consulta asociada a la cita
+                const response = await fetch(`${API_URL}/consultas/cita/${idCita}`, {credentials: 'include'});
+                
+                if (!response.ok) {
+                    alert('No se encontró información de la consulta');
+                    return;
+                }
+                
+                const consulta = await response.json();
+                
+                // Cargar datos en el modal de detalle (solo lectura) - IGUAL que cargarModalDetalleConsulta
+                document.getElementById('detalle-paciente-nombre').textContent = `${consulta.paciente.nombres} ${consulta.paciente.apellidos}`;
+                document.getElementById('detalle-paciente-cedula').textContent = consulta.paciente.cedula;
+                document.getElementById('detalle-fecha-consulta').textContent = new Date(consulta.fechaConsulta).toLocaleString('es-EC');
+                document.getElementById('detalle-motivo').value = consulta.motivoConsulta || 'N/A';
+                document.getElementById('detalle-sintomas').value = consulta.sintomasPresentados || 'N/A';
+                
+                // Parsear signos vitales
+                if (consulta.signosVitales) {
+                    const signos = typeof consulta.signosVitales === 'string' ? JSON.parse(consulta.signosVitales) : consulta.signosVitales;
+                    document.getElementById('detalle-temperatura').value = signos.temperatura || 'N/A';
+                    document.getElementById('detalle-presion').value = signos.presionArterial || 'N/A';
+                    document.getElementById('detalle-fc').value = signos.frecuenciaCardiaca || 'N/A';
+                    document.getElementById('detalle-fr').value = signos.frecuenciaRespiratoria || 'N/A';
+                    document.getElementById('detalle-sat').value = signos.saturacionOxigeno || 'N/A';
+                    document.getElementById('detalle-peso').value = signos.peso || 'N/A';
+                    document.getElementById('detalle-altura').value = signos.altura || 'N/A';
+                }
+                
+                document.getElementById('detalle-examen-fisico').value = consulta.examenFisico || 'N/A';
+                document.getElementById('detalle-diagnostico').value = consulta.diagnostico || 'N/A';
+                document.getElementById('detalle-observaciones').value = consulta.observaciones || 'N/A';
+                document.getElementById('detalle-recomendaciones').value = consulta.recomendaciones || 'N/A';
+                document.getElementById('detalle-proxima-cita').value = consulta.proximaCita || 'N/A';
+                
+                // Mostrar modal con Bootstrap
+                $('#modalDetalleConsulta').modal('show');
+                
+            } catch (error) {
+                console.error('Error al cargar detalle de consulta:', error);
+                alert('Error al cargar el detalle de la consulta');
+            }
+        }
+        
+        // Función para ver razón de cancelación
+        function verRazonCancelacion(motivoConsulta) {
+            // Extraer la razón de cancelación del motivo
+            const match = motivoConsulta.match(/\[CANCELADA - Razón: (.+?)\]/);
+            if (match) {
+                const razon = match[1];
+                const motivoOriginal = motivoConsulta.replace(/\[CANCELADA - Razón: .+?\]/, '').trim();
+                
+                document.getElementById('cancelacion-motivo-original').textContent = motivoOriginal || 'Sin motivo original';
+                document.getElementById('cancelacion-razon').textContent = razon;
+                
+                // Mostrar modal con Bootstrap
+                $('#modalVerCancelacion').modal('show');
+            } else {
+                alert('No se encontró información de cancelación');
+            }
+        }
     </script>
 
 </body>

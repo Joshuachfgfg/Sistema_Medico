@@ -335,14 +335,11 @@ INSERT INTO roles (nombre_rol, descripcion) VALUES
 ('Recepcionista', 'Gestión de citas y registro de pacientes'),
 ('Paciente', 'Acceso limitado a su información médica');
 
--- Insertar estados de citas
+-- Insertar estados de citas (simplificados)
 INSERT INTO estados_cita (nombre_estado, descripcion, color_hex) VALUES
-('Programada', 'Cita programada y confirmada', '#3B82F6'),
-('Confirmada', 'Paciente confirmó asistencia', '#10B981'),
-('En Atención', 'Paciente siendo atendido', '#F59E0B'),
-('Completada', 'Consulta finalizada', '#6B7280'),
-('Cancelada', 'Cita cancelada por paciente o médico', '#EF4444'),
-('No Asistió', 'Paciente no se presentó', '#DC2626');
+('Pendiente', 'Cita agendada, esperando atención', '#FFC107'),
+('Completada', 'Cita atendida exitosamente', '#4CAF50'),
+('Cancelada', 'Cita cancelada por paciente o médico', '#F44336');
 
 -- Insertar especialidades médicas comunes
 INSERT INTO especialidades (nombre_especialidad, descripcion) VALUES

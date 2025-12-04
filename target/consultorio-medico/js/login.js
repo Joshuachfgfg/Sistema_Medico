@@ -58,13 +58,23 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 // FUNCIONALIDAD CAMBIAR CONTRASEÑA
 // ============================================
 function cerrarModalPassword() {
-    document.getElementById('modalCambiarPassword').style.display = 'none';
-    document.getElementById('formCambiarPassword').reset();
-    document.getElementById('errorMessageModal').textContent = '';
-    document.getElementById('successMessageModal').style.display = 'none';
+    const modal = document.getElementById('modalCambiarPassword');
+    const form = document.getElementById('formCambiarPassword');
+    const errorDiv = document.getElementById('errorMessageModal');
+    const successDiv = document.getElementById('successMessageModal');
+    
+    if (modal) modal.style.display = 'none';
+    if (form) form.reset();
+    if (errorDiv) errorDiv.textContent = '';
+    if (successDiv) successDiv.style.display = 'none';
 }
 
-document.getElementById('formCambiarPassword').addEventListener('submit', async (e) => {
+// Registrar evento cuando el DOM esté listo
+window.addEventListener('DOMContentLoaded', () => {
+    const formCambiarPassword = document.getElementById('formCambiarPassword');
+    
+    if (formCambiarPassword) {
+        formCambiarPassword.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const cedula = document.getElementById('recuperarCedula').value.trim();
@@ -95,44 +105,23 @@ document.getElementById('formCambiarPassword').addEventListener('submit', async 
     }
     
     try {
-        // Buscar paciente por cédula
-        const response = await fetch(`/consultorio-medico/resources/pacientes/cedula/${cedula}`, {
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            errorDiv.textContent = 'No se encontró un paciente con esa cédula';
-            return;
-        }
-        
-        const paciente = await response.json();
-        
-        // Verificar que el paciente tenga usuario
-        if (!paciente.usuario) {
-            errorDiv.textContent = 'Este paciente no tiene usuario registrado';
-            return;
-        }
-        
-        // Verificar que el nombre de usuario coincida
-        if (paciente.usuario.nombreUsuario !== nombreUsuario) {
-            errorDiv.textContent = 'El nombre de usuario no coincide con la cédula proporcionada';
-            return;
-        }
-        
-        // Actualizar la contraseña
-        const updateResponse = await fetch(`/consultorio-medico/resources/usuarios/${paciente.usuario.idUsuario}`, {
-            method: 'PUT',
+        // Llamar al endpoint de cambio de contraseña
+        const response = await fetch('/consultorio-medico/resources/usuarios/cambiar-password', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({
-                ...paciente.usuario,
-                contrasenaHash: nuevaPassword // El backend la encriptará
+                cedula: cedula,
+                nombreUsuario: nombreUsuario,
+                nuevaPassword: nuevaPassword
             })
         });
         
-        if (updateResponse.ok) {
+        const data = await response.json();
+        
+        if (response.ok) {
             successDiv.textContent = '✓ Contraseña actualizada exitosamente. Ahora puedes iniciar sesión con tu nueva contraseña.';
             successDiv.style.display = 'block';
+            errorDiv.textContent = '';
             
             // Limpiar formulario
             document.getElementById('formCambiarPassword').reset();
@@ -142,12 +131,16 @@ document.getElementById('formCambiarPassword').addEventListener('submit', async 
                 cerrarModalPassword();
             }, 3000);
         } else {
-            errorDiv.textContent = 'Error al actualizar la contraseña';
+            errorDiv.textContent = data.error || 'Error al cambiar la contraseña';
+            successDiv.style.display = 'none';
         }
         
     } catch (error) {
         console.error('Error:', error);
-        errorDiv.textContent = 'Error de conexión: ' + error.message;
+        errorDiv.textContent = 'Error de conexión con el servidor';
+        successDiv.style.display = 'none';
+    }
+        });
     }
 });
 

@@ -1,6 +1,8 @@
 package com.mycompany.consultorio.medico.resources;
 
+import com.mycompany.consultorio.medico.dao.PacienteDAO;
 import com.mycompany.consultorio.medico.dao.UsuarioDAO;
+import com.mycompany.consultorio.medico.model.Paciente;
 import com.mycompany.consultorio.medico.model.Usuario;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -166,6 +168,53 @@ public class UsuarioResource {
         } catch (Exception e) {
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"" + e.getMessage() + "\"}")
+                    .build();
+        }
+    }
+    
+    @POST
+    @Path("cambiar-password")
+    public Response cambiarPassword(java.util.Map<String, String> data) {
+        try {
+            String cedula = data.get("cedula");
+            String nombreUsuario = data.get("nombreUsuario");
+            String nuevaPassword = data.get("nuevaPassword");
+            
+            if (cedula == null || nombreUsuario == null || nuevaPassword == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Faltan datos requeridos\"}")
+                        .build();
+            }
+            
+            // Buscar paciente por cédula
+            PacienteDAO pacienteDAO = new PacienteDAO();
+            Paciente paciente = pacienteDAO.findByCedula(cedula)
+                    .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+            
+            // Verificar que tenga usuario
+            if (paciente.getUsuario() == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Este paciente no tiene usuario registrado\"}")
+                        .build();
+            }
+            
+            // Verificar nombre de usuario
+            if (!paciente.getUsuario().getNombreUsuario().equals(nombreUsuario)) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Nombre de usuario no coincide\"}")
+                        .build();
+            }
+            
+            // Actualizar contraseña
+            Usuario usuario = paciente.getUsuario();
+            String passwordHash = BCrypt.hashpw(nuevaPassword, BCrypt.gensalt());
+            usuario.setContrasenaHash(passwordHash);
+            usuarioDAO.save(usuario);
+            
+            return Response.ok("{\"message\": \"Contraseña actualizada exitosamente\"}").build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"error\": \"" + e.getMessage() + "\"}")
                     .build();
         }

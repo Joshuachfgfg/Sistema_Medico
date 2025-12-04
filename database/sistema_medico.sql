@@ -162,9 +162,10 @@ CREATE TABLE citas (
     fecha_cancelacion TIMESTAMP,
     motivo_cancelacion TEXT,
     recordatorio_enviado BOOLEAN DEFAULT FALSE,
+    activo BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (id_paciente) REFERENCES pacientes(id_paciente),
     FOREIGN KEY (id_medico) REFERENCES medicos(id_medico),
-    FOREIGN KEY (id_estado_cita) REFERENCES estados_cita(id_estado_cita)
+    FOREIGN KEY (id_estado_cita) REFERENCIAS estados_cita(id_estado_cita)
 );
 
 -- ============================================

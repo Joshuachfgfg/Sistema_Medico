@@ -11,13 +11,13 @@ async function loadCitas() {
         const response = await fetch(`${API_URL}/citas`, { credentials: 'include' });
         const citas = await response.json();
         
-        // Separar citas por estado
-        const pendientes = citas.filter(c => c.estadoCita?.nombreEstado === 'Pendiente');
+        // Separar citas por estado (usando los nombres exactos de la BD)
+        const pendientes = citas.filter(c => c.estadoCita?.nombreEstado === 'Programada' || c.estadoCita?.nombreEstado === 'Pendiente');
         const confirmadas = citas.filter(c => c.estadoCita?.nombreEstado === 'Confirmada');
-        const atendidas = citas.filter(c => c.estadoCita?.nombreEstado === 'Atendida');
+        const atendidas = citas.filter(c => c.estadoCita?.nombreEstado === 'Completada' || c.estadoCita?.nombreEstado === 'Atendida' || c.estadoCita?.nombreEstado === 'En Atención');
         const canceladas = citas.filter(c => c.estadoCita?.nombreEstado === 'Cancelada');
         const reprogramadas = citas.filter(c => c.estadoCita?.nombreEstado === 'Reprogramada');
-        const noAsistio = citas.filter(c => c.estadoCita?.nombreEstado === 'No asistió');
+        const noAsistio = citas.filter(c => c.estadoCita?.nombreEstado === 'No Asistió' || c.estadoCita?.nombreEstado === 'No asistió');
         
         // Cargar citas eliminadas
         loadCitasEliminadas();
@@ -54,9 +54,9 @@ function renderCitasTable(tbodyId, citas, bgColor) {
     }
     
     tbody.innerHTML = citas.map(c => {
-        const estadoNombre = c.estadoCita ? c.estadoCita.nombreEstado : 'Pendiente';
-        const esAtendida = estadoNombre === 'Atendida';
-        const noAsistio = estadoNombre === 'No asistió';
+        const estadoNombre = c.estadoCita ? c.estadoCita.nombreEstado : 'Programada';
+        const esAtendida = estadoNombre === 'Completada' || estadoNombre === 'Atendida' || estadoNombre === 'En Atención';
+        const noAsistio = estadoNombre === 'No Asistió' || estadoNombre === 'No asistió';
         
         let botonesExtra = '';
         if (esAtendida || noAsistio) {
